@@ -1,89 +1,158 @@
 package com.example.androidcharacter.ui;
 
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.fragment.app.FragmentManager;
 
 import android.content.Intent;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.Button;
+import android.widget.GridView;
 import android.widget.Toast;
 
 import com.example.androidcharacter.R;
+import com.example.androidcharacter.data.AndroidImageAssets;
 
-public class MainActivity extends AppCompatActivity implements MasterListFragment.OnImageClickListner{
+public class MainActivity extends AppCompatActivity implements MasterListFragment.OnImageClickListner {
 
     private int headIndex;
     private int bodyIndex;
     private int legIndex;
+
+    private boolean mTwoPane;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        // pass bundle to android character activity
-        Bundle b = new Bundle();
-        b.putInt("headIndex",headIndex);
-        b.putInt("bodyIndex",bodyIndex);
-        b.putInt("legIndex",legIndex);
+        // ============= TABLET  =======================
+        //determine if it is tablet
+        if(findViewById(R.id.android_tab_character_ll) !=null)
+        {
+            mTwoPane = true;
 
-        // attach to intent
-        final Intent intent = new Intent(this,AndroidCharacterActivity.class);
-        intent.putExtras(b);
-        Button nextButton = findViewById(R.id.nextButton);
-        nextButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                startActivity(intent);
+            //gridview
+            GridView gridView = findViewById(R.id.imaged_grid_view);
+            gridView.setNumColumns(2);
+
+            //remove button
+            Button nextButton = findViewById(R.id.nextButton);
+            nextButton.setVisibility(View.GONE);
+
+            if(savedInstanceState == null)
+            {
+                FragmentManager fragmentManager = getSupportFragmentManager();
+
+                //head
+                BodyPartFragment headFragment = new BodyPartFragment();
+                headFragment.setImageIds(AndroidImageAssets.getHeads());
+                fragmentManager.beginTransaction()
+                        .add(R.id.head_container,headFragment)
+                        .commit();
+
+                //body
+                BodyPartFragment bodyFragment = new BodyPartFragment();
+                bodyFragment.setImageIds(AndroidImageAssets.getBodies());
+                fragmentManager.beginTransaction()
+                        .add(R.id.body_container,bodyFragment)
+                        .commit();
+
+                //leg
+                BodyPartFragment legFragment = new BodyPartFragment();
+                legFragment.setImageIds(AndroidImageAssets.getLegs());
+                fragmentManager.beginTransaction()
+                        .add(R.id.leg_container,legFragment)
+                        .commit();
             }
-        });
+        }
+        else{
+            mTwoPane = false;
+        }
+
     }
 
     @Override
     public void onImageSelected(int position) {
-        Toast.makeText(this, "Position Clicked"+position, Toast.LENGTH_SHORT).show();
+        Toast.makeText(this, "Position Clicked: " + position, Toast.LENGTH_SHORT).show();
 
-        // get the body part number
-        //0-head
-        //1-body
-        //2-leg
-
+        //get the body part number
+        // 0 : head
+        // 1 : body
+        // 2 : legs
         int bodyPartNumber = position/12;
-        // list index
-        int listIndex = position-12*bodyPartNumber;
 
-        // selected image is placed on the body part fragment accordingly
+        //list index
+        int listIndex = position - 12 * bodyPartNumber;
 
-        switch (bodyPartNumber){
-            case 0:
-                headIndex = listIndex;
-                break;
-            case 1:
-                bodyIndex = listIndex;
-                break;
-            case  2:
-                legIndex = listIndex;
-                break;
-            default: break;
+        //selected image is placed on the bodypartfragment accordingly
+        if(mTwoPane)
+        {
+            BodyPartFragment newFragment = new BodyPartFragment();
+
+            switch (bodyPartNumber)
+            {
+                case 0:
+                    newFragment.setImageIds(AndroidImageAssets.getHeads());
+                    newFragment.setListIndex(listIndex);
+                    getSupportFragmentManager().beginTransaction()
+                            .add(R.id.head_container,newFragment)
+                            .commit();
+                    break;
+                case 1:
+                    newFragment.setImageIds(AndroidImageAssets.getBodies());
+                    newFragment.setListIndex(listIndex);
+                    getSupportFragmentManager().beginTransaction()
+                            .add(R.id.body_container,newFragment)
+                            .commit();
+                    break;
+                case 2:
+                    newFragment.setImageIds(AndroidImageAssets.getLegs());
+                    newFragment.setListIndex(listIndex);
+                    getSupportFragmentManager().beginTransaction()
+                            .add(R.id.leg_container,newFragment)
+                            .commit();
+                    break;
+                default: break;
+            }
+        }
+        else{
+
+            switch (bodyPartNumber)
+            {
+                case 0:
+                    headIndex = listIndex;
+                    break;
+                case 1:
+                    bodyIndex = listIndex;
+                    break;
+                case 2:
+                    legIndex = listIndex;
+                    break;
+                default: break;
+            }
         }
 
-        // pass bundle to android character activity
+
+        //pass bundle to android character activity
         Bundle b = new Bundle();
+
         b.putInt("headIndex",headIndex);
         b.putInt("bodyIndex",bodyIndex);
         b.putInt("legIndex",legIndex);
 
-        // attach to intent
+
+        //attach to intent
         final Intent intent = new Intent(this,AndroidCharacterActivity.class);
         intent.putExtras(b);
+
         Button nextButton = findViewById(R.id.nextButton);
         nextButton.setOnClickListener(new View.OnClickListener() {
             @Override
-            public void onClick(View v) {
+            public void onClick(View view) {
                 startActivity(intent);
             }
         });
-
 
     }
 }
